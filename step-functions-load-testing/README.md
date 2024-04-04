@@ -1,11 +1,11 @@
 # Serverless load generator using distributed map 
 
-This project creates a serverless load generator using AWS Step Functions' distributed map to load test a workload. This pattern load tests a Lambda function, however this can be extended to load test other workloads like HTTP endpoints, APIs or other services that Step Functions support.
+This project creates a serverless load generator Step Function and uses distributed map to load test a workload. This pattern load tests a Lambda function, however this can be extended to load test other workloads like HTTP endpoints, APIs or other services that Step Functions support.
 
 
-It creates two AWS Step Functions. The first, `StateMachineLoadTester`, orchestrates the ramp up of the load, checking the concurrency and holding the load for a specified period of time. The second step function, `StateMachineLoadTesterRunLoad`, is responsible for generating the load by using a distributed map and invoking the workload that needs to be load tested. 
+It creates two AWS Step Functions. The first, `LoadTesterStateMachine`, orchestrates the ramp up of the load, checking the concurrency and holding the load for a specified period of time. The second step function, `LoadTesterStateMachineRunLoad`, is responsible for generating the load by using a distributed map and invoking the workload that needs to be load tested.
 
-The step function takes in 3 parameters:
+The step function `LoadTesterStateMachine` is the entry point and takes in 3 parameters:
 
  - `rampUpDuration` The time in minutes over which the load should gradually be increased till it reaches the `targetConcurrency`
  - `duration` The time in minutes after the `rampupDuration` the load test should run
@@ -55,7 +55,7 @@ Important: this application uses various AWS services and there are costs associ
 ![image](./resources/stepfunctions_graph.png)
 
 ## Testing
-1. Navigate to the Step Function page on the AWS console and locate the `StateMachineLoadTester` step function
+1. Navigate to the Step Function page on the AWS console and locate the `LoadTesterStateMachine` step function
 2. Click on the "Start execution" button
 3. On the pop-up window, use the below JSON as the input and hit "Start execution" button. This will start a load test that will simulate 5 concurrent users, ramped up over 1 minute and will hold the load for 5 minutes. 
 

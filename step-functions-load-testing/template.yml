@@ -20,42 +20,47 @@ Parameters:
 
 Resources:
   # Step functions state machine
-  StateMachineLoadTester:
+  LoadGeneratorStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
-      Name: StateMachineLoadTester
+      Name: LoadGeneratorStateMachine
       DefinitionUri: statemachine/load-orchestrator-statemachine.asl.json
       DefinitionSubstitutions:
         AWSPartition: !Ref AWS::Partition
         LambdaArn: !Ref LambdaArn
         LambdaParameters: !Ref LambdaParameters
-        FunctionLoadTesterLoadGeneratorArn: !GetAtt FunctionLoadTesterLoadGenerator.Arn
-        StateMachineLoadTesterRunLoadArn: !Ref StateMachineLoadTesterRunLoad
-      Role: !GetAtt RoleLoadTester.Arn
-  StateMachineLoadTesterRunLoad:
+        FunctionLoadTesterLoadGeneratorArn: !Ref LoadMonitorFunction
+        StateMachineLoadTesterRunLoadArn: !Ref RunLoadStateMachine
+      Role: !GetAtt LoadGeneratorRole.Arn
+  RunLoadStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
+      Name: RunLoadStateMachine
       DefinitionUri: statemachine/load-generator-statemachine.asl.json
       DefinitionSubstitutions:
         AWSPartition: !Ref AWS::Partition
         LambdaArn: !Ref LambdaArn
         LambdaParameters: !Ref LambdaParameters
-      Role: !GetAtt RoleLoadTesterRunLoad.Arn
+      Policies:
+        -  LambdaInvokePolicy:
+            FunctionName: !Sub "${LambdaArn}"
+        -  StepFunctionsExecutionPolicy:
+            StateMachineName: RunLoadStateMachine
 
   # Lambda functions
-  FunctionLoadTesterLoadGenerator:
-    Type: "AWS::Serverless::Function"
+  LoadMonitorFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      FunctionName: "FunctionLoadTesterLoadGenerator"
-      CodeUri: lambda/timer/
+      FunctionName: LoadMonitorFunction
+      CodeUri: lambda/loadmonitor/
       Handler: "index.handler"
-      Role: !GetAtt "RoleLoadTesterLoadGenerator.Arn"
       Runtime: "nodejs20.x"
 
   # IAM roles
-  RoleLoadTester:
-    Type: "AWS::IAM::Role"
+  LoadGeneratorRole:
+    Type: AWS::IAM::Role
     Properties:
+      RoleName: LoadGeneratorRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -64,10 +69,11 @@ Resources:
               Service: "states.amazonaws.com"
             Action: "sts:AssumeRole"
       Policies:
-        - PolicyName: PolicyLoadTester
+        - PolicyName: LoadGeneratorPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
+              # Needed to allow synchronous execution of a nested step function. Reference: https://docs.aws.amazon.com/step-functions/latest/dg/stepfunctions-iam.html
               - Effect: Allow
                 Action:
                   - "events:PutTargets"
@@ -78,62 +84,12 @@ Resources:
               - Effect: Allow
                 Action: "lambda:InvokeFunction"
                 Resource:
-                  - !Sub "${FunctionLoadTesterLoadGenerator.Arn}:*"
+                  - !GetAtt LoadMonitorFunction.Arn
               - Effect: Allow
                 Action: "states:StartExecution"
                 Resource:
-                  - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:StateMachineLoadTesterRunLoad-*"
-  RoleLoadTesterRunLoad:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: "states.amazonaws.com"
-            Action: "sts:AssumeRole"
-      Policies:
-        - PolicyName: PolicyLoadTesterRunLoad
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action: "lambda:InvokeFunction"
-                Resource:
-                  - !GetAtt "FunctionLoadTesterLoadGenerator.Arn"
-                  - !Sub "${LambdaArn}"
-              - Effect: Allow
-                Action: "states:StartExecution"
-                Resource:
-                  - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:StateMachineLoadTesterRunLoad-*"
-  RoleLoadTesterLoadGenerator:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: "lambda.amazonaws.com"
-            Action: "sts:AssumeRole"
-      Policies:
-        - PolicyName: PolicyLoadTesterLoadGenerator
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action: "logs:CreateLogGroup"
-                Resource:
-                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
-              - Effect: Allow
-                Action:
-                  - "logs:CreateLogStream"
-                  - "logs:PutLogEvents"
-                  - "logs:PutLogEvents"
-                Resource:
-                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/FunctionLoadTesterLoadGenerator:*"
+                  - !Ref RunLoadStateMachine
 Outputs:
   LoadTester:
     Description: "The ARN of the state machine to generate load"
-    Value: !Ref StateMachineLoadTester
+    Value: !Ref LoadGeneratorStateMachine
