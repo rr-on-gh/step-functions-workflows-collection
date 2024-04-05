@@ -10,9 +10,9 @@ Description: >
   You will be billed for the AWS resources used if you create a stack from this template.
 
 Parameters:
-  LambdaArn:
+  LambdaFunctionName:
     Type: String
-    Description: ARN of the Lambda function that the state machine will load test
+    Description: Name of the Lambda function that the state machine will load test
   LambdaParameters:
     Type: String
     Description: Parameters to be passed to the Lambda function that will be load tested
@@ -27,8 +27,6 @@ Resources:
       DefinitionUri: statemachine/load-orchestrator-statemachine.asl.json
       DefinitionSubstitutions:
         AWSPartition: !Ref AWS::Partition
-        LambdaArn: !Ref LambdaArn
-        LambdaParameters: !Ref LambdaParameters
         FunctionLoadTesterLoadGeneratorArn: !Ref LoadMonitorFunction
         StateMachineLoadTesterRunLoadArn: !Ref RunLoadStateMachine
       Role: !GetAtt LoadGeneratorRole.Arn
@@ -39,11 +37,11 @@ Resources:
       DefinitionUri: statemachine/load-generator-statemachine.asl.json
       DefinitionSubstitutions:
         AWSPartition: !Ref AWS::Partition
-        LambdaArn: !Ref LambdaArn
+        LambdaFunctionName: !Ref LambdaFunctionName
         LambdaParameters: !Ref LambdaParameters
       Policies:
         -  LambdaInvokePolicy:
-            FunctionName: !Sub "${LambdaArn}"
+            FunctionName: !Ref LambdaFunctionName
         -  StepFunctionsExecutionPolicy:
             StateMachineName: RunLoadStateMachine
 

@@ -38,15 +38,26 @@ Important: this application uses various AWS services and there are costs associ
    sam build
    sam deploy --guided
    ```
-1. During the prompts:
+   1. During the prompts:
 
-   - Enter a stack name
-   - Enter the desired AWS Region
-   - For the Parameter `LambdaArn`, enter the ARN of the Lambda function that you want to load test
-   - For the Parameter `LambdaParameters`, enter the parameters that need to be passed to the Lambda function
-   - Allow SAM CLI to create IAM roles with the required permissions.
+      - Enter a stack name
+      - Enter the desired AWS Region
+      - For the Parameter `LambdaFunctionName`, enter the ARN of the Lambda function that you want to load test
+      - For the Parameter `LambdaParameters`, enter the parameters that need to be passed to the Lambda function
+        - For example, if your lambda function accepts this input
+        ```json
+         {
+           "s3Bucket": "my-s3-bucket",
+           "s3Key": "photo.jpeg"
+         }
+         ```
+        escape it appropriately:
+        ```shell
+           Parameter LambdaParameters []: {  \"s3Bucket\": \"my-s3-bucket\",  \"s3Key\": \"photo.jpeg\" }
+        ```
+      - Allow SAM CLI to create IAM roles with the required permissions.
 
-   Once you have run `sam deploy --guided` mode once and saved arguments to a configuration file (samconfig.toml), you can use `sam deploy` in future to use these defaults.
+      Once you have run `sam deploy --guided` mode once and saved arguments to a configuration file (samconfig.toml), you can use `sam deploy` in future to use these defaults.
 
 1. Note the outputs from the SAM deployment process. These contain the resource names and/or ARNs which are used for testing.
 

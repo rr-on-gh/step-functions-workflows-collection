@@ -14,15 +14,17 @@
           "Setup Lambda": {
             "Type": "Pass",
             "Next": "Run Lambda",
-            "Parameters": "${LambdaParameters}"
+            "Parameters": {
+              "LambdaParameters": "${LambdaParameters}"
+            }
           },
           "Run Lambda": {
             "Type": "Task",
             "Resource": "arn:${AWSPartition}:states:::lambda:invoke",
             "OutputPath": "$.Payload",
             "Parameters": {
-              "Payload.$": "$",
-              "FunctionName": "${LambdaArn}"
+              "Payload.$": "States.StringToJson($.LambdaParameters)",
+              "FunctionName": "${LambdaFunctionName}"
             },
             "End": true
           }
