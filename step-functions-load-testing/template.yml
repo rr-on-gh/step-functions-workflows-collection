@@ -58,7 +58,6 @@ Resources:
   LoadGeneratorRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: LoadGeneratorRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
