@@ -1,16 +1,14 @@
 # Serverless load generator using distributed map 
 
-This project creates a serverless load generator Step Function and uses distributed map to load test a workload. This pattern load tests a Lambda function, however this can be extended to load test other workloads like HTTP endpoints, APIs or other services that Step Functions support.
+This project creates a serverless load generator Step Function and uses distributed map to load test a workload. This pattern generates load for a Lambda function, however this can be extended to load test other workloads like HTTP endpoints, APIs or other services that Step Functions support.
 
+It creates two AWS Step Functions. The first, `LoadGeneratorStateMachine`, orchestrates the ramp up of the load, checking the concurrency and holding the load for a specified period of time. The second step function, `RunLoadStateMachine`, is responsible for generating the load by using a distributed map and invoking the workload that needs to be load tested.
 
-It creates two AWS Step Functions. The first, `LoadTesterStateMachine`, orchestrates the ramp up of the load, checking the concurrency and holding the load for a specified period of time. The second step function, `LoadTesterStateMachineRunLoad`, is responsible for generating the load by using a distributed map and invoking the workload that needs to be load tested.
-
-The step function `LoadTesterStateMachine` is the entry point and takes in 3 parameters:
+The step function `LoadGeneratorStateMachine` is the entry point and takes in 3 parameters:
 
  - `rampUpDuration` The time in minutes over which the load should gradually be increased till it reaches the `targetConcurrency`
  - `duration` The time in minutes after the `rampupDuration` the load test should run
  - `targetConcurrency` The total number of simulated concurrent virtual users that invoke the workload in parallel
-
 
 Important: this application uses various AWS services and there are costs associated with these services after the Free Tier usage - please see the [AWS Pricing page](https://aws.amazon.com/pricing/) for details. You are responsible for any AWS costs incurred. No warranty is implied in this example.
 
@@ -59,25 +57,24 @@ Important: this application uses various AWS services and there are costs associ
 
       Once you have run `sam deploy --guided` mode once and saved arguments to a configuration file (samconfig.toml), you can use `sam deploy` in future to use these defaults.
 
-1. Note the outputs from the SAM deployment process. These contain the resource names and/or ARNs which are used for testing.
+1. Note the output from the SAM deployment process. These contain the ARN of the step function that will be used for load generation.
 
 ## How it works
 
 ![image](./resources/stepfunctions_graph.png)
 
 ## Testing
-1. Navigate to the Step Function page on the AWS console and locate the `LoadTesterStateMachine` step function
+1. Navigate to the Step Function page on the AWS console and locate the `LoadGeneratorStateMachine` step function
 2. Click on the "Start execution" button
-3. On the pop-up window, use the below JSON as the input and hit "Start execution" button. This will start a load test that will simulate 5 concurrent users, ramped up over 1 minute and will hold the load for 5 minutes. 
-
-```json
-   {
-      "rampUpDuration": 1,
-      "duration": 2,
-      "targetConcurrency": 5
-   }
-```
-4. Navigate to the Lambda function that you are load testing and check the "Monitor" tab to view how the Lambda behaves under load
+3. On the pop-up window, use the below JSON as the input and hit "Start execution" button. This will start a load generation that will simulate 5 concurrent users, ramped up over 1 minute and will hold the load for 5 minutes.
+    ```json
+       {
+          "rampUpDuration": 1,
+          "duration": 2,
+          "targetConcurrency": 5
+       }
+    ```
+4. Navigate to the Lambda function that you are load testing and check the "Monitor" tab to view metrics on how the Lambda behaves under load
 
 ## Cleanup
  
