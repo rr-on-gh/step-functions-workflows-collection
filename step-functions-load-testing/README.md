@@ -2,7 +2,7 @@
 
 This project creates a serverless load generator Step Function and uses distributed map to load test a workload. This pattern generates load for a Lambda function, however this can be extended to load test other workloads like HTTP endpoints, APIs or other services that Step Functions support.
 
-It creates two AWS Step Functions. The first, `LoadGeneratorStateMachine`, orchestrates the ramp up of the load, checking the concurrency and holding the load for a specified period of time. The second step function, `RunLoadStateMachine`, is responsible for generating the load by using a distributed map and invoking the workload that needs to be load tested.
+It creates two AWS Step Functions. The first, `LoadGeneratorStateMachine`, is responsible for orchestrating the ramp up of the load, checking the concurrency and holding the load for a specified period of time. The second step function, `RunLoadStateMachine`, is responsible for generating the load by using a distributed map and invoking the workload that needs to be load tested.
 
 The step function `LoadGeneratorStateMachine` is the entry point and takes in 3 parameters:
 
@@ -57,11 +57,15 @@ Important: this application uses various AWS services and there are costs associ
 
       Once you have run `sam deploy --guided` mode once and saved arguments to a configuration file (samconfig.toml), you can use `sam deploy` in future to use these defaults.
 
-1. Note the output from the SAM deployment process. These contain the ARN of the step function that will be used for load generation.
+1. Note the output from the SAM deployment process. This contains the ARN of the step function that will be used for load generation.
 
 ## How it works
 
 ![image](./resources/stepfunctions_graph.png)
+
+When the step function is triggered it first starts the ramp-up phase. In this phase it starts a timer to monitor if the ramp up time is reached. It then uses a distributed map to  calls to the Lambda function in parallel. After each execution of the distributed map ends, the Step Function checks if the ramp up time is reached and increases the concurrency of the distributed map. Once the ramp up time is reached, the state machine then send the load to the Lambda for the time specified in input.
+
+Note that the state machine runs the distributed map and the time in serial. The state machine need to wait for an iteration of the distributed map to finish, then check if the ramp up or load time is reached and then trigger another round of load. If there are some slow executions in the Lambda, this can lead to "saw-effect", where you might see load on the Lambda drop down before it picks up again periodically. This usually is a good indication that your workload has some condition leader to such stragglers and worth investigating. If this is expected, you can smooth out the load, but creating multiple executions of this step function, that are spaced out over time. The step function also has the max execution time set to 30 seconds in [load-orchestrator-statemachine.asl.json](statemachine/load-orchestrator-statemachine.asl.json), which you can tweak based on your workload's characteristics.
 
 ## Testing
 1. Navigate to the Step Function page on the AWS console and locate the `LoadGeneratorStateMachine` step function

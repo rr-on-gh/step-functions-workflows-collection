@@ -32,7 +32,6 @@
       },
       "InputPath": "$.StatePayload",
       "ResultPath": null,
-      "MaxConcurrency": 1000,
       "End": true
     }
   }
