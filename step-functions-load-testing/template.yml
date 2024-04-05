@@ -51,39 +51,39 @@ Resources:
     Properties:
       FunctionName: LoadMonitorFunction
       CodeUri: lambda/loadmonitor/
-      Handler: "index.handler"
-      Runtime: "nodejs20.x"
+      Handler: index.handler
+      Runtime: nodejs20.x
 
   # IAM roles
   LoadGeneratorRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
-              Service: "states.amazonaws.com"
-            Action: "sts:AssumeRole"
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
       Policies:
         - PolicyName: LoadGeneratorPolicy
           PolicyDocument:
-            Version: "2012-10-17"
+            Version: 2012-10-17
             Statement:
               # Needed to allow synchronous execution of a nested step function. Reference: https://docs.aws.amazon.com/step-functions/latest/dg/stepfunctions-iam.html
               - Effect: Allow
                 Action:
-                  - "events:PutTargets"
-                  - "events:PutRule"
-                  - "events:DescribeRule"
+                  - events:PutTargets
+                  - events:PutRule
+                  - events:DescribeRule
                 Resource:
-                  - !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventsForStepFunctionsExecutionRule"
+                  - !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventsForStepFunctionsExecutionRule
               - Effect: Allow
-                Action: "lambda:InvokeFunction"
+                Action: lambda:InvokeFunction
                 Resource:
                   - !GetAtt LoadMonitorFunction.Arn
               - Effect: Allow
-                Action: "states:StartExecution"
+                Action: states:StartExecution
                 Resource:
                   - !Ref RunLoadStateMachine
 Outputs:
