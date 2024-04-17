@@ -42,7 +42,7 @@ Important: this application uses various AWS services and there are costs associ
 
       - Enter a stack name
       - Enter the desired AWS Region
-      - For the Parameter `LambdaFunctionName`, enter the ARN of the Lambda function that you want to load test
+      - For the Parameter `LambdaFunctionName`, enter the name of the Lambda function that you want to load test
       - For the Parameter `LambdaParameters`, enter the parameters that need to be passed to the Lambda function
         - For example, if your lambda function accepts this input
         ```json
