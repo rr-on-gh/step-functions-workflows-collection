@@ -19,7 +19,7 @@ Parameters:
     Default: "{}"
 
 Resources:
-  # Step functions state machine
+  # Step functions state machine that will orchestrate the generation of load
   LoadGeneratorStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
@@ -30,6 +30,7 @@ Resources:
         FunctionLoadTesterLoadGeneratorArn: !Ref LoadMonitorFunction
         StateMachineLoadTesterRunLoadArn: !Ref RunLoadStateMachine
       Role: !GetAtt LoadGeneratorRole.Arn
+  # Step functions state machine that will generate the load
   RunLoadStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
@@ -45,7 +46,7 @@ Resources:
         -  StepFunctionsExecutionPolicy:
             StateMachineName: RunLoadStateMachine
 
-  # Lambda functions
+  # Lambda function to scale the concurrency during ramp up phase and monitor the load generation times
   LoadMonitorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -54,7 +55,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs20.x
 
-  # IAM roles
+  # IAM role for the LoadGeneratorStateMachine step function to invoke the nested step function and the load monitor Lambda function
   LoadGeneratorRole:
     Type: AWS::IAM::Role
     Properties:
